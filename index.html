@@ -1,132 +1,195 @@
-<script>
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photo-canvas');
-    const captureBtn = document.getElementById('capture-btn');
-    const uploadBtn = document.getElementById('upload-btn');
-    
-    // ⚠️ 记得确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
-    const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
-
-    let localStream = null;
-
-    // 启动摄像头（升级版：自适应分辨率 + 多设备兼容）
-    async function startCamera() {
-        // 兼容旧版浏览器的写法
-        if (navigator.mediaDevices === undefined) {
-            navigator.mediaDevices = {};
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真实之镜 True Mirror</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-        if (navigator.mediaDevices.getUserMedia === undefined) {
-            navigator.mediaDevices.getUserMedia = function(constraints) {
-                var getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                if (!getUserMedia) {
-                    return Promise.reject(new Error('您的浏览器不支持调用摄像头，请更换 Chrome 或 Safari 浏览器'));
-                }
-                return new Promise(function(resolve, reject) {
-                    getUserMedia.call(navigator, constraints, resolve, reject);
-                });
+        h1 { margin-bottom: 5px; font-weight: 400; }
+        .notice {
+            background-color: #1e1e1e;
+            border-left: 4px solid #00adb5;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            max-width: 450px;
+            font-size: 13px;
+            color: #aaaaaa;
+            border-radius: 0 8px 8px 0;
+        }
+        .mirror-container {
+            position: relative;
+            width: 90%;
+            max-width: 480px;
+            aspect-ratio: 4 / 3;
+            background-color: #1a1a1a;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #000;
+        }
+        .controls { margin-top: 25px; display: flex; gap: 15px; }
+        button {
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button.secondary { background-color: #28a745; }
+        canvas { display: none; }
+        /* 强制覆盖未加载时的加载提示文字 */
+        .loading-tip {
+            position: absolute;
+            color: #666;
+            font-size: 14px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>真实之镜</h1>
+    
+    <div class="notice">
+        <strong>💡 提示：</strong>如果打开后黑屏，请点击屏幕任意地方，或者点击“拍摄照片”按钮，网页会强制重新唤醒摄像头。
+    </div>
+
+    <div class="mirror-container">
+        <div class="loading-tip">正在唤醒摄像头...</div>
+        <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
+    </div>
+
+    <div class="controls">
+        <button id="capture-btn">📸 拍摄照片</button>
+        <button id="upload-btn" class="secondary" style="display: none;">☁️ 保存到云端</button>
+    </div>
+
+    <canvas id="photo-canvas"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('photo-canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        
+        // ⚠️ 请确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
+        const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
+
+        let localStream = null;
+
+        // 终极兼容唤醒函数
+        async function startCamera() {
+            if (localStream) return; // 如果已经启动了，就不重复启动
+
+            // 极简参数，不设分辨率死值，让系统自行匹配最顺畅的流
+            const constraints = { 
+                video: { facingMode: "user" }, 
+                audio: false 
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                localStream = stream;
+                video.srcObject = stream;
+                
+                // 再次确保底层硬件播放被触发
+                video.play();
+                document.querySelector('.loading-tip').style.display = 'none'; // 隐藏提示字
+            } catch (err) {
+                document.querySelector('.loading-tip').innerText = '启动失败，请检查权限';
+                alert("无法唤醒摄像头，请检查浏览器权限设置。错误代号: " + err.name);
             }
         }
 
-        const constraints = { 
-            // ideal 表示“理想状态”，如果手机达不到，会自动降低分辨率，不会直接死机
-            video: { 
-                width: { ideal: 1280 }, 
-                height: { ideal: 720 },
-                facingMode: "user" // 优先调用前置摄像头
-            }, 
-            audio: false 
-        };
+        // 兜底机制 1：页面加载完毕自动尝试运行
+        window.addEventListener('DOMContentLoaded', startCamera);
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            localStream = stream;
-            video.srcObject = stream;
+        // 兜底机制 2：用户只要触摸或者点击了网页任意地方，就再度强制触发唤醒（对付手机浏览器极有效）
+        document.body.addEventListener('click', startCamera, { once: true });
+        document.body.addEventListener('touchstart', startCamera, { once: true });
+
+        // 拍照动作
+        captureBtn.addEventListener('click', async () => {
+            // 如果点击拍照时摄像头还没起效，这里做最后一次强行唤醒
+            if (!localStream) {
+                await startCamera();
+                return;
+            }
+
+            const w = video.videoWidth || 640;
+            const h = video.videoHeight || 480;
+            canvas.width = w;
+            canvas.height = h;
             
-            // 【关键步骤】确保在 iOS 微信或 Safari 中能自动播放
-            video.setAttribute('playsinline', true);
-            video.setAttribute('webkit-playsinline', true);
-            video.muted = true; // 静音以允许自动播放
-            
-            video.play().catch(e => console.log("播放被拦截:", e));
-        } catch (err) {
-            console.error("摄像头初始化失败:", err);
-            alert("摄像头开启失败，可能原因：\n1. 未授予网页摄像头权限；\n2. 摄像头正被微信或其他APP占用；\n3. 硬件不支持。 \n\n报错信息: " + err.message);
-        }
-    }
-
-    // 拍照动作（升级版：加入强制兜底尺寸）
-    captureBtn.addEventListener('click', () => {
-        if (!localStream) {
-            alert("摄像头还没准备好，请刷新页面并允许权限。");
-            return;
-        }
-
-        // 获取视频的实际播放宽高，如果获取不到，用 640x480 兜底
-        const w = video.videoWidth || 640;
-        const h = video.videoHeight || 480;
-        
-        canvas.width = w;
-        canvas.height = h;
-        
-        const ctx = canvas.getContext('2d');
-        
-        try {
-            // 抓取当前视频画面
+            const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, w, h);
             
-            // 拍照成功反馈
             uploadBtn.style.display = 'inline-block';
             uploadBtn.innerText = '☁️ 保存到云端';
             uploadBtn.disabled = false;
             captureBtn.innerText = '🔄 重新拍摄';
-            
-            // 闪烁一下提示拍照成功
-            video.style.opacity = 0.5;
-            setTimeout(() => video.style.opacity = 1, 150);
-            
-        } catch (e) {
-            alert("抓取画面失败: " + e.message);
-        }
-    });
+        });
 
-    // 上传到云端
-    uploadBtn.addEventListener('click', () => {
-        uploadBtn.innerText = '⚡ 正在同步至云端...';
-        uploadBtn.disabled = true;
+        // 上传到云端
+        uploadBtn.addEventListener('click', () => {
+            uploadBtn.innerText = '⚡ 正在同步至云端...';
+            uploadBtn.disabled = true;
 
-        canvas.toBlob((blob) => {
-            if (!blob) return alert("图片生成失败");
+            canvas.toBlob((blob) => {
+                if (!blob) return alert("图片生成失败");
 
-            const formData = new FormData();
-            formData.append('image', blob, 'capture.jpg');
+                const formData = new FormData();
+                formData.append('image', blob, 'capture.jpg');
 
-            fetch(`${HF_SPACE_URL}/upload`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => {
-                if(!res.ok) throw new Error('云端服务器响应失败，可能正在休眠');
-                return res.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    uploadBtn.innerText = '✅ 保存成功';
-                    const finalImgUrl = HF_SPACE_URL + data.imageUrl;
-                    alert(`照片已成功上云！\n可在新窗口打开链接查看：\n\n${finalImgUrl}`);
-                    window.open(finalImgUrl, '_blank'); 
-                } else {
-                    throw new Error(data.message || '上传失败');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("上传失败！\n提示：如果 Hugging Face 超过48小时无人访问会进入休眠，请先去你的 Hugging Face Space 页面看它是否正在「Building」或「Awaking」，等它变成绿色的 Running 就可以正常上传了。");
-                uploadBtn.innerText = '❌ 重试上传';
-                uploadBtn.disabled = false;
-            });
-        }, 'image/jpeg', 0.85);
-    });
-
-    // 自动运行摄像头
-    window.addEventListener('DOMContentLoaded', startCamera);
-</script>
+                fetch(`${HF_SPACE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+                    if(!res.ok) throw new Error('云端服务未响应');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        uploadBtn.innerText = '✅ 保存成功';
+                        const finalImgUrl = HF_SPACE_URL + data.imageUrl;
+                        alert(`照片已成功上云！\n可在新窗口打开链接查看：\n\n${finalImgUrl}`);
+                        window.open(finalImgUrl, '_blank'); 
+                    } else {
+                        throw new Error(data.message || '上传失败');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("上传遇到了问题。请检查您的 Hugging Face 空间当前状态是否为绿色的 Running。");
+                    uploadBtn.innerText = '❌ 重试上传';
+                    uploadBtn.disabled = false;
+                });
+            }, 'image/jpeg', 0.85);
+        });
+    </script>
+</body>
+</html>
