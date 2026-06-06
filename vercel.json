@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/upload",
+      "destination": "https://sam1qiu-mirror-backend.hf.space/upload"
+    }
+  ]
+}
