@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真实之镜 True Mirror</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .notice {
+            background-color: #1e1e1e;
+            border-left: 4px solid #00adb5;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            max-width: 450px;
+            font-size: 13px;
+            color: #aaaaaa;
+            line-height: 1.5;
+            border-radius: 0 8px 8px 0;
+            text-align: left;
+        }
+
+        .mirror-container {
+            position: relative;
+            width: 90%;
+            max-width: 480px;
+            aspect-ratio: 4 / 3;
+            background-color: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* 提示：真实之镜不进行左右反转，所以保持正常视角的原样 */
+        }
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 173, 181, 0.4);
+        }
+
+        button:hover {
+            background-color: #008c9e;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #444;
+            color: #888;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background-color: #28a745;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        button.secondary:hover {
+            background-color: #218838;
+        }
+
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>真实之镜</h1>
+    
+    <div class="notice">
+        <strong>📷 权限提示：</strong> 本网页需要使用您的摄像头。点击“保存到云端”后，照片将上传至 Hugging Face 免费云存储空间。由于是免费公共空间，请勿拍摄和上传过于隐私的内容。
+    </div>
+
+    <div class="mirror-container">
+        <video id="webcam" autoplay playsinline></video>
+    </div>
+
+    <div class="controls">
+        <button id="capture-btn">📸 拍摄照片</button>
+        <button id="upload-btn" class="secondary" style="display: none;">☁️ 保存到云端</button>
+    </div>
+
+    <canvas id="photo-canvas"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('photo-canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        
+        // ⚠️ 记得修改这里！换成你在第一部分第3步里得到的 Hugging Face Direct URL
+        // 注意末尾不要带斜杠 /
+        const HF_SPACE_URL = https://sam1qiu-mirror-backend.hf.space'; 
+
+        let localStream = null;
+
+        // 启动摄像头
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: false 
+                });
+                localStream = stream;
+                video.srcObject = stream;
+            } catch (err) {
+                console.error(err);
+                alert("无法打开摄像头，请确保已允许网页获取摄像头权限。");
+            }
+        }
+
+        // 拍照动作
+        captureBtn.addEventListener('click', () => {
+            if (!localStream) return alert("摄像头未就绪");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            uploadBtn.style.display = 'inline-block';
+            uploadBtn.innerText = '☁️ 保存到云端';
+            uploadBtn.disabled = false;
+            captureBtn.innerText = '🔄 重新拍摄';
+        });
+
+        // 上传到云端
+        uploadBtn.addEventListener('click', () => {
+            uploadBtn.innerText = '⚡ 正在同步至云端...';
+            uploadBtn.disabled = true;
+
+            canvas.toBlob((blob) => {
+                if (!blob) return alert("图片生成失败");
+
+                const formData = new FormData();
+                formData.append('image', blob, 'capture.jpg');
+
+                // 把照片推送到 Hugging Face 后端
+                fetch(`${HF_SPACE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+                    if(!res.ok) throw new Error('网络请求失败');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        uploadBtn.innerText = '✅ 保存成功';
+                        // 拼接出最终图片的完整云端可以查看的网址
+                        const finalImgUrl = HF_SPACE_URL + data.imageUrl;
+                        
+                        alert(`照片已成功上云！\n可在新窗口打开链接查看：\n\n${finalImgUrl}`);
+                        window.open(finalImgUrl, '_blank'); // 自动弹窗打开图片
+                    } else {
+                        throw new Error(data.message || '上传失败');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("上传失败，请检查你的 Hugging Face 后端是否在正常运行。");
+                    uploadBtn.innerText = '❌ 重试上传';
+                    uploadBtn.disabled = false;
+                });
+            }, 'image/jpeg', 0.85);
+        });
+
+        // 自动运行摄像头
+        window.addEventListener('DOMContentLoaded', startCamera);
+    </script>
+</body>
+</html>
